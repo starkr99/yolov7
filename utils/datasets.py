@@ -1,5 +1,5 @@
 # Dataset utils and dataloaders
-
+import base64
 import glob
 import logging
 import math
@@ -124,6 +124,44 @@ class _RepeatSampler(object):
         while True:
             yield from iter(self.sampler)
 
+class LoadImagesFromBase64:
+    def __init__(self, base64_imgs, img_size=640, stride=32):
+        self.img_size = img_size
+        self.stride = stride
+        self.base64_imgs = base64_imgs
+        self.nf = len(self.base64_imgs)
+        self.mode = 'image'
+
+    @staticmethod
+    def load_image_from_base64(base64_str):
+        img_data = base64.b64decode(base64_str)
+        img_np = np.fromstring(img_data, np.uint8)
+        img = cv2.imdecode(img_np, cv2.IMREAD_COLOR)
+        return img
+
+    def __iter__(self):
+        self.count = 0
+        return self
+
+    def __next__(self):
+        if self.count == self.nf:
+            raise StopIteration
+        img_base64 = self.base64_imgs[self.count]
+        img0 = self.load_image_from_base64(img_base64)
+
+        self.count += 1
+
+        # Padded resize
+        img = letterbox(img0, self.img_size, stride=self.stride)[0]
+
+        # Convert
+        img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+        img = np.ascontiguousarray(img)
+
+        return img_base64, img, img0, None
+
+    def __len__(self):
+        return self.nf  # number of files
 
 class LoadImages:  # for inference
     def __init__(self, path, img_size=640, stride=32):
