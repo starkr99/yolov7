@@ -39,3 +39,4 @@ thop  # FLOPs computation
 # roboflow
 flask
 wget
+opencv-python-headless==4.6.0.66
