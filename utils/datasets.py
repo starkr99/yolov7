@@ -134,7 +134,8 @@ class LoadImagesFromBase64:
 
     @staticmethod
     def load_image_from_base64(base64_str):
-        img_data = base64.b64decode(base64_str)
+        data_str = base64_str.split(',')[-1]
+        img_data = base64.b64decode(data_str)
         img_np = np.fromstring(img_data, np.uint8)
         img = cv2.imdecode(img_np, cv2.IMREAD_COLOR)
         return img
